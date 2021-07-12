@@ -19,6 +19,8 @@ main/main
 *.out
 
 # Go mod file
+main/*.mod
+main/*.sum
 *.mod
 
 # Dependency directories (remove the comment below to include it)
