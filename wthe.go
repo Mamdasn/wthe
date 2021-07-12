@@ -43,7 +43,27 @@ func Wthe(imagename string) *image.RGBA {
 			v := float2uint8(hsv.V)
 			m_hsv.Set(x, y, color.RGBA{h, s, v, 255})
 			m_v_of_hsv.Set(x, y, color.RGBA{v, v, v, 255})
+			
+			// check if rgb2hsv and then hsv2rgb of the image is equal to the image
+			rc := float64(r) / 65535
+			gc := float64(g) / 65535
+			bc := float64(b) / 65535
+			rgb_out := hsv.RGB()
+			rn := rgb_out.R
+			gn := rgb_out.G
+			bn := rgb_out.B
 
+			// fmt.Println(rc - rn)
+			// fmt.Println(gc - gn)
+			// fmt.Println(bc - bn)
+
+			if (rc - rn) > 1e-15 {
+				fmt.Println(rc - rn, r == uint32(math.Round(rn*65535)))
+			} else if (gc - gn) > 1e-15 {
+				fmt.Println(gc - gn, g == uint32(math.Round(gn*65535)))
+			} else if (bc - bn) > 1e-15 {
+				fmt.Println(bc - bn, b == uint32(math.Round(bn*65535)))
+			}
 		}
 	}
 
