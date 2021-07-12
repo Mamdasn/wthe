@@ -98,7 +98,7 @@ func Wthe(imagename string) *image.RGBA {
 	// fmt.Println("Wout:", Wout) // debugging
 
 	v_cdf := cumsum(v_pmf)
-	m_v_of_hsv_mean := meanOfGray(m_v_of_hsv)
+	// m_v_of_hsv_mean := meanOfGray(m_v_of_hsv)
 
 	// make changes to the value layer of the hsv image
 	for x := img_bounds.Min.X; x < img_bounds.Max.X; x++ {
@@ -112,22 +112,22 @@ func Wthe(imagename string) *image.RGBA {
 		}
 	}
 
-	// adjust the average brightness of the new hsv image to match the original image
-	m_v_of_new_hsv_mean := meanOfGray(m_v_of_hsv)
-	mean_diff := m_v_of_hsv_mean - m_v_of_new_hsv_mean
-	// fmt.Println(mean_diff) // debugging
-	for x := img_bounds.Min.X; x < img_bounds.Max.X; x++ {
-		for y := img_bounds.Min.Y; y < img_bounds.Max.Y; y++ {
-			h, s, v, _ := m_hsv.At(x, y).RGBA()
-			v_new := int32(v>>8) + int32(mean_diff*255)
-			if v_new > 255 {
-				v_new = 255
-			} else if v_new < 0 {
-				v_new = 0
-			}
-			m_hsv.Set(x, y, color.RGBA{uint8(h >> 8), uint8(s >> 8), uint8(v_new), 255})
-		}
-	}
+	// // adjust the average brightness of the new hsv image to match the original image
+	// m_v_of_new_hsv_mean := meanOfGray(m_v_of_hsv)
+	// mean_diff := m_v_of_hsv_mean - m_v_of_new_hsv_mean
+	// // fmt.Println(mean_diff) // debugging
+	// for x := img_bounds.Min.X; x < img_bounds.Max.X; x++ {
+	// 	for y := img_bounds.Min.Y; y < img_bounds.Max.Y; y++ {
+	// 		h, s, v, _ := m_hsv.At(x, y).RGBA()
+	// 		v_new := int32(v>>8) + int32(mean_diff*255)
+	// 		if v_new > 255 {
+	// 			v_new = 255
+	// 		} else if v_new < 0 {
+	// 			v_new = 0
+	// 		}
+	// 		m_hsv.Set(x, y, color.RGBA{uint8(h >> 8), uint8(s >> 8), uint8(v_new), 255})
+	// 	}
+	// }
 
 	// convert hsv to rgb, img_out
 	for x := img_bounds.Min.X; x < img_bounds.Max.X; x++ {
