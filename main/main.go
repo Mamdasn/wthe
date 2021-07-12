@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"wthe"
+	"github.com/Mamdasn/wthe"
 
 )
 
