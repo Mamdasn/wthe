@@ -11,11 +11,11 @@ import (
 	"os"
 )
 
-type HSV struct { // {0..1}
+type HSV struct { 
 	H, S, V float64
 }
 
-type RGB struct { // {0..255}
+type RGB struct { 
 	R, G, B float64
 }
 
