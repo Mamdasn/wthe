@@ -8,3 +8,7 @@ You can access the article that came up with this method [here](https://www.rese
 ## Showcase
 * A sample image and the sample image after enhancement  
 ![cloudy-day jpg](https://github.com/Mamdasn/wthe/blob/main/showcase/assets/cloudy-day-400.jpg "cloudy-day jpg") ![Enhanced-cloudy-day jpg](https://github.com/Mamdasn/wthe/blob/main/showcase/output/Enhanced-cloudy-day-400.jpg "Enhanced-cloudy-day jpg") 
+
+## Future works
+* disassemble wthe.go into seperate categories of functions
+* add more comments
