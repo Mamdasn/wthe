@@ -234,7 +234,6 @@ func SaveImageToFilePath(filePath string, img *image.RGBA) error {
 }
 
 func (c *RGB) HSV() *HSV {
-	// def rgb_to_hsv(r, g, b):
 	var h, s, v float64
 
 	r := c.R
@@ -254,7 +253,6 @@ func (c *RGB) HSV() *HSV {
 		return hsv
 	}
 
-	// s = 0 if high == 0 else d/high
 	if high > 0.0 { // NOTE: if Max is == 0, this divide would cause a crash
 		s = (d / high) // s
 	} else {
@@ -266,12 +264,6 @@ func (c *RGB) HSV() *HSV {
 		return hsv
 	}
 
-	// h = {
-	//     r: (g - b) / d + (6 if g < b else 0),
-	//     g: (b - r) / d + 2,
-	//     b: (r - g) / d + 4,
-	// }[high]
-	// h /= 6
 
 	if r == high {
 		offset := 0.0
@@ -288,13 +280,11 @@ func (c *RGB) HSV() *HSV {
 	}
 	h = h * 60.0 / 360.0 //  normalize
 
-	// return h, s, v
 	hsv := &HSV{h, s, v}
 	return hsv
 }
 
 func (c *HSV) RGB() *RGB {
-	// def hsv_to_rgb(h, s, v):
 	var r, g, b float64
 
 	h := c.H
@@ -303,13 +293,6 @@ func (c *HSV) RGB() *RGB {
 	if h >= 1.0 {
 		h = math.Mod(h, 1.0)
 	}
-	// if s == 0.0 {
-	// 	r = v
-	// 	g = v
-	// 	b = v
-	// 	rgb := &RGB{r, g, b}
-	// 	return rgb
-	// }
 
 	i := math.Floor(h * 6)
 	f := h*6 - i
@@ -343,16 +326,6 @@ func (c *HSV) RGB() *RGB {
 		g = p
 		b = q
 	}
-	// r, g, b = [
-	//     (v, t, p),
-	//     (q, v, p),
-	//     (p, v, t),
-	//     (p, q, v),
-	//     (t, p, v),
-	//     (v, p, q),
-	// ][int(i%6)]
-
-	// return r, g, b
 	rgb := &RGB{r, g, b}
 	return rgb
 }
