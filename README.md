@@ -7,5 +7,5 @@ You can access the article that came up with this method [here](https://www.rese
 
 ## Showcase
 * A sample image and the sample image after enhancement 
-![cloudy-day.jpg jpg](https://raw.githubusercontent.com/Mamdasn/wthe/main/showcase/output/cloudy-day.jpg "cloudy-day.jpg jpg") 
+![cloudy-day.jpg jpg](https://raw.githubusercontent.com/Mamdasn/wthe/main/showcase/assets/cloudy-day.jpg "cloudy-day.jpg jpg") 
 ![Enhanced-cloudy-day.jpg jpg](https://raw.githubusercontent.com/Mamdasn/wthe/main/showcase/output/Enhanced-cloudy-day.jpg "Enhanced-cloudy-day.jpg jpg") 
