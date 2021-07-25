@@ -99,7 +99,7 @@ func Wthe(imagename string) *image.RGBA {
 
 	v_cdf := cumsum(v_pmf)
 
-	// m_v_of_hsv_mean
+	// // adjust the average brightness of the new hsv image to match the original image
 	// m_v_of_hsv_mean := meanOfGray(m_v_of_hsv)
 
 	// make changes to the value layer of the hsv image
@@ -109,6 +109,7 @@ func Wthe(imagename string) *image.RGBA {
 			v_new := uint8(Wout * v_cdf[v>>8])
 
 			m_hsv.Set(x, y, color.RGBA{uint8(h >> 8), uint8(s >> 8), v_new, 255})
+			// // adjust the average brightness of the new hsv image to match the original image
 			// m_v_of_hsv.Set(x, y, color.RGBA{v_new, v_new, v_new, 255})
 
 		}
