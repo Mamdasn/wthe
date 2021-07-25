@@ -11,11 +11,11 @@ import (
 	"os"
 )
 
-type HSV struct { 
+type HSV struct { // {0..1}
 	H, S, V float64
 }
 
-type RGB struct { 
+type RGB struct { // {0..255}
 	R, G, B float64
 }
 
@@ -43,27 +43,27 @@ func Wthe(imagename string) *image.RGBA {
 			v := float2uint8(hsv.V)
 			m_hsv.Set(x, y, color.RGBA{h, s, v, 255})
 			m_v_of_hsv.Set(x, y, color.RGBA{v, v, v, 255})
-			
-			// check if rgb2hsv and then hsv2rgb of the image is equal to the image
-			rc := float64(r) / 65535
-			gc := float64(g) / 65535
-			bc := float64(b) / 65535
-			rgb_out := hsv.RGB()
-			rn := rgb_out.R
-			gn := rgb_out.G
-			bn := rgb_out.B
 
-			// fmt.Println(rc - rn)
-			// fmt.Println(gc - gn)
-			// fmt.Println(bc - bn)
+			// // check if rgb2hsv and then hsv2rgb of the image is equal to the image
+			// rc := float64(r) / 65535
+			// gc := float64(g) / 65535
+			// bc := float64(b) / 65535
+			// rgb_out := hsv.RGB()
+			// rn := rgb_out.R
+			// gn := rgb_out.G
+			// bn := rgb_out.B
 
-			if (rc - rn) > 1e-15 {
-				fmt.Println(rc - rn, r == uint32(math.Round(rn*65535)))
-			} else if (gc - gn) > 1e-15 {
-				fmt.Println(gc - gn, g == uint32(math.Round(gn*65535)))
-			} else if (bc - bn) > 1e-15 {
-				fmt.Println(bc - bn, b == uint32(math.Round(bn*65535)))
-			}
+			// // fmt.Println(rc - rn)
+			// // fmt.Println(gc - gn)
+			// // fmt.Println(bc - bn)
+
+			// if (rc - rn) > 1e-15 {
+			// 	fmt.Println(rc-rn, r == uint32(math.Round(rn*65535)))
+			// } else if (gc - gn) > 1e-15 {
+			// 	fmt.Println(gc-gn, g == uint32(math.Round(gn*65535)))
+			// } else if (bc - bn) > 1e-15 {
+			// 	fmt.Println(bc-bn, b == uint32(math.Round(bn*65535)))
+			// }
 		}
 	}
 
@@ -98,6 +98,8 @@ func Wthe(imagename string) *image.RGBA {
 	// fmt.Println("Wout:", Wout) // debugging
 
 	v_cdf := cumsum(v_pmf)
+
+	// m_v_of_hsv_mean
 	// m_v_of_hsv_mean := meanOfGray(m_v_of_hsv)
 
 	// make changes to the value layer of the hsv image
@@ -232,108 +234,125 @@ func SaveImageToFilePath(filePath string, img *image.RGBA) error {
 }
 
 func (c *RGB) HSV() *HSV {
-		var h, s, v float64
-		r:= c.R
-		g:= c.G
-		b:= c.B
-		min := math.Min(r, math.Min(g, b))
-	
-		max := math.Max(r, math.Max(g, b))
-	
-		v = max;                                // v
-		delta := max - min;
-		if delta < 0.00001 {
-			s = 0;
-			h = 0; // undefined, maybe nan?
-			hsv := &HSV{h, s, v}
-			return hsv;
-		}
-		if max > 0.0 { // NOTE: if Max is == 0, this divide would cause a crash
-			s = (delta / max)                  // s
-		} else {
-			// if max is 0, then r = g = b = 0              
-			// s = 0, h is undefined
-			s = 0.0
-			h = 0.0                            // its now undefined
-			hsv := &HSV{h, s, v}
-			return hsv
-		}
-		if r >= max {	// > is bogus, just keeps compilor happy
-			h = (( g - b ) / delta)        // between yellow & magenta
-		}else if g >= max {
-			h = (2.0 + ( b - r ) / delta) ;  // between cyan & yellow
-		}else{
-			h = (4.0 + ( r - g ) / delta)   // between magenta & cyan
-		}
-	
-		h  = h*60/360 //  normalize
-		// h *= 60.0;
-	
+	// def rgb_to_hsv(r, g, b):
+	var h, s, v float64
+
+	r := c.R
+	g := c.G
+	b := c.B
+
+	high := math.Max(r, math.Max(g, b))
+	low := math.Min(r, math.Min(g, b))
+
+	v = high
+	d := high - low
+
+	if d == 0.0 {
+		s = 0.0
+		h = 0.0 // undefined, maybe nan?
 		hsv := &HSV{h, s, v}
 		return hsv
 	}
-	
-	
-	func (c *HSV) RGB() *RGB {
-		var r, g, b float64
-		var p, q, t float64
-	
-		h := c.H
-		s := c.S
-		v := c.V
-		if(s <= 0.0) {       // < is bogus, just shuts up warnings
-			r = v;
-			g = v;
-			b = v;
-			rgb := &RGB{r, g, b}
-			return rgb;
-		}
-		
-		if(h >= 1.0) {
-			h = math.Mod(h, 1.0)
-		}
-		h *= 6.0;
-		region := math.Floor(h)
-		// fmt.Println(region, h) // debugging
-		remainder := h - math.Floor(h)
-		p = v * (1.0 - s);
-		q = v * (1.0 - (s * remainder));
-		t = v * (1.0 - (s * (1.0 - remainder)));
-	
-		switch(region) {
-		case 0:
-			r = v;
-			g = t;
-			b = p;
-			break;
-		case 1:
-			r = q;
-			g = v;
-			b = p;
-			break;
-		case 2:
-			r = p;
-			g = v;
-			b = t;
-			break;
-	
-		case 3:
-			r = p;
-			g = q;
-			b = v;
-			break;
-		case 4:
-			r = t;
-			g = p;
-			b = v;
-			break;
-		case 5:
-		default:
-			r = v;
-			g = p;
-			b = q;
-			break;
-		}
-		rgb := &RGB{r, g, b}
-		return rgb     
+
+	// s = 0 if high == 0 else d/high
+	if high > 0.0 { // NOTE: if Max is == 0, this divide would cause a crash
+		s = (d / high) // s
+	} else {
+		// if max is 0, then r = g = b = 0
+		// s = 0, h is undefined
+		s = 0.0
+		h = 0.5 // its now undefined
+		hsv := &HSV{h, s, v}
+		return hsv
 	}
+
+	// h = {
+	//     r: (g - b) / d + (6 if g < b else 0),
+	//     g: (b - r) / d + 2,
+	//     b: (r - g) / d + 4,
+	// }[high]
+	// h /= 6
+
+	if r == high {
+		offset := 0.0
+		if g < b {
+			offset = 6.0
+		}
+		h = (g-b)/d + offset
+
+	} else if g == high {
+		h = (b-r)/d + 2.0
+
+	} else if b == high {
+		h = (r-g)/d + 4.0
+	}
+	h = h * 60.0 / 360.0 //  normalize
+
+	// return h, s, v
+	hsv := &HSV{h, s, v}
+	return hsv
+}
+
+func (c *HSV) RGB() *RGB {
+	// def hsv_to_rgb(h, s, v):
+	var r, g, b float64
+
+	h := c.H
+	s := c.S
+	v := c.V
+	if h >= 1.0 {
+		h = math.Mod(h, 1.0)
+	}
+	// if s == 0.0 {
+	// 	r = v
+	// 	g = v
+	// 	b = v
+	// 	rgb := &RGB{r, g, b}
+	// 	return rgb
+	// }
+
+	i := math.Floor(h * 6)
+	f := h*6 - i
+	p := v * (1.0 - s)
+	q := v * (1.0 - f*s)
+	t := v * (1.0 - (1.0-f)*s)
+
+	switch i {
+	case 0:
+		r = v
+		g = t
+		b = p
+	case 1:
+		r = q
+		g = v
+		b = p
+	case 2:
+		r = p
+		g = v
+		b = t
+	case 3:
+		r = p
+		g = q
+		b = v
+	case 4:
+		r = t
+		g = p
+		b = v
+	case 5:
+		r = v
+		g = p
+		b = q
+	}
+	// r, g, b = [
+	//     (v, t, p),
+	//     (q, v, p),
+	//     (p, v, t),
+	//     (p, q, v),
+	//     (t, p, v),
+	//     (v, p, q),
+	// ][int(i%6)]
+
+	// return r, g, b
+	rgb := &RGB{r, g, b}
+	return rgb
+}
