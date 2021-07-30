@@ -83,7 +83,7 @@ func Wthe(imagename string) *image.RGBA {
 
 	v_pmf_new := v_pmf
 	for i, v := range v_pmf {
-		if v < Pl {
+		if v <= Pl {
 			v_pmf_new[i] = 0
 		} else if v > Pu {
 			v_pmf_new[i] = Pu
@@ -97,7 +97,13 @@ func Wthe(imagename string) *image.RGBA {
 	Wout := math.Min(255.0, Gmax*Win)
 	// fmt.Println("Wout:", Wout) // debugging
 
-	v_cdf := cumsum(v_pmf)
+	v_cdf := cumsum(v_pmf_new)
+	for i, _ := range v_cdf {
+		v_cdf[i] /= v_cdf[len(v_cdf)-1]
+	}
+	// fmt.Println("v_pmf_new", v_pmf_new)
+	// fmt.Println("v_pmf", v_pmf)
+	// fmt.Println("v_cdf", v_cdf)
 
 	// // adjust the average brightness of the new hsv image to match the original image
 	// m_v_of_hsv_mean := meanOfGray(m_v_of_hsv)
