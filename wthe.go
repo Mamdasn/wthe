@@ -260,7 +260,7 @@ func (c *RGB) HSV() *HSV {
 		// if max is 0, then r = g = b = 0
 		// s = 0, h is undefined
 		s = 0.0
-		h = 0.5 // its now undefined
+		h = 0.0 // its now undefined
 		hsv := &HSV{h, s, v}
 		return hsv
 	}
