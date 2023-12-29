@@ -4,4 +4,4 @@ go 1.16
 
 // replace github.com/Mamdasn/wthe => ../.
 
-require github.com/Mamdasn/wthe v0.0.1 // indirect
+require github.com/Mamdasn/wthe v0.0.2 // indirect
