@@ -21,7 +21,7 @@ func Wthe(imagename string) *image.RGBA {
 	return output_image
 }
 
-func wthe_transformer(input_image *image.Gray) *image.RGBA {
+func wthe_transformer(input_image *image.Image) *image.RGBA {
 	img_bounds := input_image.Bounds()
 	m_out := image.NewRGBA(img_bounds)
 
