@@ -16,7 +16,7 @@ func Wthe(imagename string) *image.RGBA {
 	if err != nil {
 		fmt.Println(err) // debugging
 	}
-	output_image := wthe_transformer(input_image)
+	output_image := Wthe_transformer(input_image)
 
 	return output_image
 }
