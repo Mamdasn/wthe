@@ -16,12 +16,12 @@ func Wthe(imagename string) *image.RGBA {
 	if err != nil {
 		fmt.Println(err) // debugging
 	}
-	output_image := Wthe_transformer(input_image)
+	output_image, _ := Wthe_transformer(input_image, 0.0)
 
 	return output_image
 }
 
-func Wthe_transformer(input_image image.Image) *image.RGBA {
+func Wthe_transformer(input_image image.Image, Wout_mem float64) (*image.RGBA, float64) {
 	img_bounds := input_image.Bounds()
 	m_out := image.NewRGBA(img_bounds)
 
@@ -74,10 +74,14 @@ func Wthe_transformer(input_image image.Image) *image.RGBA {
 	Gmax := 1.5 // 1.5 .. 2
 	Wout := math.Min(255.0, Gmax*Win)
 
+	if Wout != 0:
+		Wout = (Wout + Wout_mem) / (1 + 9)
+
 	v_cdf := cumsum(v_pmf_modified)
 	for i, _ := range v_cdf {
 		v_cdf[i] /= v_cdf[len(v_cdf)-1]
 	}
+
 	// make changes to the value layer of the hsv image
 	for x := img_bounds.Min.X; x < img_bounds.Max.X; x++ {
 		for y := img_bounds.Min.Y; y < img_bounds.Max.Y; y++ {
@@ -103,7 +107,7 @@ func Wthe_transformer(input_image image.Image) *image.RGBA {
 			m_out.Set(x, y, color.RGBA{r, g, b, 255})
 		}
 	}
-	return m_out
+	return m_out, Wout
 }
 func float2uint8(c float64) uint8 {
 	return uint8(math.Round(c * 255))
