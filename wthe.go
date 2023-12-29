@@ -98,8 +98,15 @@ func Wthe(imagename string) *image.RGBA {
 			m_out.Set(x, y, color.RGBA{r, g, b, 255})
 		}
 	}
-	return m_out
+	return rgbaToRGB(m_out)
 }
+
+// Convert from color.RGBA to RGB
+func rgbaToRGB(c color.RGBA) RGB {
+    return RGB{R: c.R, G: c.G, B: c.B}
+}
+
+
 func float2uint8(c float64) uint8 {
 	return uint8(math.Round(c * 255))
 }
