@@ -11,29 +11,22 @@ import (
 	"os"
 )
 
-type HSV struct { // {0..1}
-	H, S, V float64
-}
-
-type RGB struct { // {0..255}
-	R, G, B float64
-}
-
 func Wthe(imagename string) *image.RGBA {
-	m, err := getImageFromFilePath(imagename)
+	input_image, err := getImageFromFilePath(imagename)
 	if err != nil {
 		fmt.Println(err) // debugging
 	}
 
-	img_bounds := m.Bounds()
-	m_hsv := image.NewRGBA(img_bounds)
-	m_v_of_hsv := image.NewGray(img_bounds)
+	img_bounds := input_image.Bounds()
 	m_out := image.NewRGBA(img_bounds)
+
+	m_hsv := image.NewRGBA(img_bounds)
+	v_of_m_hsv := image.NewGray(img_bounds)
 
 	// convert rgb image to hsv
 	for x := img_bounds.Min.X; x < img_bounds.Max.X; x++ {
 		for y := img_bounds.Min.Y; y < img_bounds.Max.Y; y++ {
-			r, g, b, _ := m.At(x, y).RGBA()
+			r, g, b, _ := input_image.At(x, y).RGBA()
 			// A color's RGBA method returns values in the range [0, 65535].
 			rgb := &RGB{float64(r) / 65535, float64(g) / 65535, float64(b) / 65535}
 			// convert rgb to hsv
@@ -41,35 +34,15 @@ func Wthe(imagename string) *image.RGBA {
 			h := float2uint8(hsv.H)
 			s := float2uint8(hsv.S)
 			v := float2uint8(hsv.V)
+
 			m_hsv.Set(x, y, color.RGBA{h, s, v, 255})
-			m_v_of_hsv.Set(x, y, color.RGBA{v, v, v, 255})
-
-			// // check if rgb2hsv and then hsv2rgb of the image is equal to the image
-			// rc := float64(r) / 65535
-			// gc := float64(g) / 65535
-			// bc := float64(b) / 65535
-			// rgb_out := hsv.RGB()
-			// rn := rgb_out.R
-			// gn := rgb_out.G
-			// bn := rgb_out.B
-
-			// // fmt.Println(rc - rn)
-			// // fmt.Println(gc - gn)
-			// // fmt.Println(bc - bn)
-
-			// if (rc - rn) > 1e-15 {
-			// 	fmt.Println(rc-rn, r == uint32(math.Round(rn*65535)))
-			// } else if (gc - gn) > 1e-15 {
-			// 	fmt.Println(gc-gn, g == uint32(math.Round(gn*65535)))
-			// } else if (bc - bn) > 1e-15 {
-			// 	fmt.Println(bc-bn, b == uint32(math.Round(bn*65535)))
-			// }
+			v_of_m_hsv.SetGray(x, y, color.Gray{Y: v})
 		}
 	}
 
-	v_hist := imhist(m_v_of_hsv)
-	h_v := img_bounds.Max.Y
-	w_v := img_bounds.Max.X
+	v_hist := imhist(v_of_m_hsv)
+	h_v := img_bounds.Max.Y - img_bounds.Min.Y + 1
+	w_v := img_bounds.Max.X - img_bounds.Min.X + 1
 
 	v_pmf := [256]float64{}
 	for i, _ := range v_hist {
@@ -81,33 +54,25 @@ func Wthe(imagename string) *image.RGBA {
 	Pl := 1e-5
 	Pu := v * max(v_pmf)
 
-	v_pmf_new := v_pmf
+	v_pmf_modified := v_pmf
 	for i, v := range v_pmf {
 		if v <= Pl {
-			v_pmf_new[i] = 0
+			v_pmf_modified[i] = 0
 		} else if v > Pu {
-			v_pmf_new[i] = Pu
+			v_pmf_modified[i] = Pu
 		} else {
-			v_pmf_new[i] = (math.Pow((v-Pl)/(Pu-Pl), r)) * Pu
+			v_pmf_modified[i] = (math.Pow((v-Pl)/(Pu-Pl), r)) * Pu
 		}
 	}
 
-	Win := float64(len(whereLessThan(v_pmf, 0)))
+	Win := float64(len(whereBiggerThan(v_pmf, 0)))
 	Gmax := 1.5 // 1.5 .. 2
 	Wout := math.Min(255.0, Gmax*Win)
-	// fmt.Println("Wout:", Wout) // debugging
 
-	v_cdf := cumsum(v_pmf_new)
+	v_cdf := cumsum(v_pmf_modified)
 	for i, _ := range v_cdf {
 		v_cdf[i] /= v_cdf[len(v_cdf)-1]
 	}
-	// fmt.Println("v_pmf_new", v_pmf_new)
-	// fmt.Println("v_pmf", v_pmf)
-	// fmt.Println("v_cdf", v_cdf)
-
-	// // adjust the average brightness of the new hsv image to match the original image
-	// m_v_of_hsv_mean := meanOfGray(m_v_of_hsv)
-
 	// make changes to the value layer of the hsv image
 	for x := img_bounds.Min.X; x < img_bounds.Max.X; x++ {
 		for y := img_bounds.Min.Y; y < img_bounds.Max.Y; y++ {
@@ -116,13 +81,13 @@ func Wthe(imagename string) *image.RGBA {
 
 			m_hsv.Set(x, y, color.RGBA{uint8(h >> 8), uint8(s >> 8), v_new, 255})
 			// // adjust the average brightness of the new hsv image to match the original image
-			// m_v_of_hsv.Set(x, y, color.RGBA{v_new, v_new, v_new, 255})
+			// v_of_m_hsv.Set(x, y, color.RGBA{v_new, v_new, v_new, 255})
 
 		}
 	}
 
 	// // adjust the average brightness of the new hsv image to match the original image
-	// m_v_of_new_hsv_mean := meanOfGray(m_v_of_hsv)
+	// m_v_of_new_hsv_mean := meanOfGray(v_of_m_hsv)
 	// mean_diff := m_v_of_hsv_mean - m_v_of_new_hsv_mean
 	// // fmt.Println(mean_diff) // debugging
 	// for x := img_bounds.Min.X; x < img_bounds.Max.X; x++ {
@@ -167,7 +132,7 @@ func meanOfGray(img *image.Gray) float64 {
 			sum += g
 		}
 	}
-	return sum / float64(bounds.Max.Y*bounds.Max.X)
+	return sum / float64((bounds.Max.Y-bounds.Min.Y+1)*(bounds.Max.X-bounds.Min.X+1))
 }
 
 func imhist(img *image.Gray) [256]int {
@@ -200,7 +165,7 @@ func max(arr [256]float64) float64 {
 	return maxm
 }
 
-func whereLessThan(arr [256]float64, threshold float64) []int {
+func whereBiggerThan(arr [256]float64, threshold float64) []int {
 	where := []int{}
 	for i := 0; i < 256; i++ {
 		if arr[i] > threshold {
@@ -240,98 +205,79 @@ func SaveImageToFilePath(filePath string, img *image.RGBA) error {
 	return nil
 }
 
+type HSV struct { // {0..1}
+	H, S, V float64
+}
+
 func (c *RGB) HSV() *HSV {
-	var h, s, v float64
+	r, g, b := c.R, c.G, c.B
+	max := math.Max(r, math.Max(g, b))
+	min := math.Min(r, math.Min(g, b))
 
-	r := c.R
-	g := c.G
-	b := c.B
+	v := max
+	delta := max - min
 
-	high := math.Max(r, math.Max(g, b))
-	low := math.Min(r, math.Min(g, b))
+	var h, s float64
 
-	v = high
-	d := high - low
-
-	if d == 0.0 {
-		s = 0.0
-		h = 0.0 // undefined, maybe nan?
-		hsv := &HSV{h, s, v}
-		return hsv
-	}
-
-	if high > 0.0 { // NOTE: if Max is == 0, this divide would cause a crash
-		s = (d / high) // s
+	if max != 0 {
+		s = delta / max
 	} else {
-		// if max is 0, then r = g = b = 0
-		// s = 0, h is undefined
-		s = 0.0
-		h = 0.0 // its now undefined
-		hsv := &HSV{h, s, v}
-		return hsv
+		// r = g = b = 0
+		s = 0
+		h = -1 // Undefined
+		return &HSV{H: h, S: s, V: v}
 	}
 
-	if r == high {
-		offset := 0.0
-		if g < b {
-			offset = 6.0
-		}
-		h = (g-b)/d + offset
-
-	} else if g == high {
-		h = (b-r)/d + 2.0
-
-	} else if b == high {
-		h = (r-g)/d + 4.0
+	if r == max {
+		h = (g - b) / delta // Between yellow & magenta
+	} else if g == max {
+		h = 2 + (b-r)/delta // Between cyan & yellow
+	} else {
+		h = 4 + (r-g)/delta // Between magenta & cyan
 	}
-	h = h * 60.0 / 360.0 //  normalize
 
-	hsv := &HSV{h, s, v}
-	return hsv
+	h *= 60 // degrees
+	if h < 0 {
+		h += 360
+	}
+
+	// Normalize H to [0, 1)
+	h = h / 360
+
+	return &HSV{H: h, S: s, V: v}
+}
+
+type RGB struct { // {0..255}
+	R, G, B float64
 }
 
 func (c *HSV) RGB() *RGB {
+	h, s, v := c.H, c.S, c.V
+
+	h = math.Mod(h, 1.0) // Ensures h is within [0, 1)
+
+	region := int(math.Floor(h * 6))
+	fraction := h*6 - float64(region)
+	p := v * (1.0 - s)
+	q := v * (1 - fraction*s)
+	t := v * (1 - (1-fraction)*s)
+
 	var r, g, b float64
 
-	h := c.H
-	s := c.S
-	v := c.V
-	if h >= 1.0 {
-		h = math.Mod(h, 1.0)
-	}
-
-	i := math.Floor(h * 6)
-	f := h*6 - i
-	p := v * (1.0 - s)
-	q := v * (1.0 - f*s)
-	t := v * (1.0 - (1.0-f)*s)
-
-	switch i {
+	switch region {
 	case 0:
-		r = v
-		g = t
-		b = p
+		r, g, b = v, t, p
 	case 1:
-		r = q
-		g = v
-		b = p
+		r, g, b = q, v, p
 	case 2:
-		r = p
-		g = v
-		b = t
+		r, g, b = p, v, t
 	case 3:
-		r = p
-		g = q
-		b = v
+		r, g, b = p, q, v
 	case 4:
-		r = t
-		g = p
-		b = v
+		r, g, b = t, p, v
 	case 5:
-		r = v
-		g = p
-		b = q
+		r, g, b = v, p, q
 	}
-	rgb := &RGB{r, g, b}
-	return rgb
+
+	return &RGB{R: r, G: g, B: b}
 }
