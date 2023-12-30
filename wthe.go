@@ -74,8 +74,9 @@ func Wthe_transformer(input_image image.Image, Wout_mem float64) (*image.RGBA, f
 	Gmax := 1.5 // 1.5 .. 2
 	Wout := math.Min(255.0, Gmax*Win)
 
-	if Wout != 0:
+	if Wout != 0 {
 		Wout = (Wout + Wout_mem) / (1 + 9)
+	}
 
 	v_cdf := cumsum(v_pmf_modified)
 	for i, _ := range v_cdf {
